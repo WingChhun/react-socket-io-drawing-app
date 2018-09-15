@@ -1,0 +1,25 @@
+{
+  "name": "react-socket-io-drawing-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start":"nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WingChhun/react-socket-io-drawing-app.git"
+  },
+  "author": "James Chhun",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WingChhun/react-socket-io-drawing-app/issues"
+  },
+  "homepage": "https://github.com/WingChhun/react-socket-io-drawing-app#readme",
+  "dependencies": {
+    "nodemon": "^1.18.4",
+    "rethinkdb": "^2.3.3",
+    "socket.io": "^2.1.1"
+  }
+}
