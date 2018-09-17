@@ -16,4 +16,8 @@ function subscribeToTimer(cb) {
     socket.emit("subscribeToTimer", INTERVAL);
 }
 
+const createDrawing = name => {
+    socket.emit('createDrawing', {name});
+}
+
 export {subscribeToTimer};
