@@ -5,6 +5,26 @@ const r = require("rethinkdb");
 const PORT = process.env.PORT || 8000;
 const RETHINK_PORT = process.env.RETHINK || 28015;
 
+const createDrawing = ({connection, name}) => {
+    r
+        .table('drawings')
+        .insert({name, timestamp: new Date()})
+        .run(connection)
+        .then(() => console.log("created drawing in table drawings"));
+}
+
+const subscribeToDrawings = ({client, connection}) => {
+    r
+        .table("drawings")
+        .changes({include_initial: true})
+        .run(connection)
+        .then((cursor) => {
+            cursor.each((err, drawingRow) => {
+                client.emit("drawing", drawingRow.new_val);
+            })
+        })
+}
+
 //TODO: Sockets will depend on connecting to the database
 r
     .connect({host: 'localhost', port: RETHINK_PORT, db: 'awesome_whiteboard'})
@@ -14,29 +34,16 @@ r
 @purpose: On 'connection', when client calls socket, then we have established a connection and now have access to the client(socket)
         */
         io.on("connection", (client) => {
-            /*
-@route 'subscribeToTimer'
-@desc: Client emits 'subscribeToTimer' event and passes interval data, afterwards connect to database using the interval
-*/
 
-            client.on("subscribeToTimer", (interval) => {
+            client.on("createDrawing", ({name}) => {
+                createDrawing({connection, name});
+            })
 
-                console.log("Client is subscriming to timer with interval", interval);
+            client.on('subscribeToDrawings', () => {
+                subscribeToDrawings({client,connection});
+            })
 
-                r
-                    .table('timers')
-                    .changes()
-                    .run(connection)
-                    .then((cursor) => {
-                        cursor.each((err, timerRow) => {
-
-                            //@desc: When the rethinkDB table changes, client
-                            client.emit("timer", timerRow.new_val.timestamp);
-
-                        });
-                    });
-            }); //End subscribe tot imer
-        });
+        }); //End subscribe tot imer
     });
 
 io.listen(PORT);
