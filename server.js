@@ -6,18 +6,18 @@ const PORT = process.env.PORT || 8000;
 const RETHINK_PORT = process.env.RETHINK || 28015;
 
 //TODO: Sockets will depend on connecting to the database
-
 r
     .connect({host: 'localhost', port: RETHINK_PORT, db: 'awesome_whiteboard'})
     .then((connection) => {
 
-        //*Connection, passback a callback with that client
+        /*
+@purpose: On 'connection', when client calls socket, then we have established a connection and now have access to the client(socket)
+        */
         io.on("connection", (client) => {
-
             /*
-function : client.on("subscribeToTimer")
-@desc: Will fire once a subscribeToTimer is fired from the client
-    */
+@route 'subscribeToTimer'
+@desc: Client emits 'subscribeToTimer' event and passes interval data, afterwards connect to database using the interval
+*/
 
             client.on("subscribeToTimer", (interval) => {
 
@@ -30,18 +30,15 @@ function : client.on("subscribeToTimer")
                     .then((cursor) => {
                         cursor.each((err, timerRow) => {
 
+                            //@desc: When the rethinkDB table changes, client
                             client.emit("timer", timerRow.new_val.timestamp);
 
                         });
                     });
-                //     setInterval(() => {         client.emit("timer", new Date());     },
-                // interval) });
-
-            });
-
+            }); //End subscribe tot imer
         });
     });
-    
+
 io.listen(PORT);
 
 console.log("Listening on port", PORT);
