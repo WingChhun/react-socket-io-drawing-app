@@ -9,6 +9,7 @@ class App extends Component {
     {
         super(props);
 
+        //NOTE: App starts, subscribe to Timer event
         subscribeToTimer((timestamp) => {
             this.setState({timestamp});
         })

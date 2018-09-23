@@ -5,43 +5,47 @@ const r = require("rethinkdb");
 const PORT = process.env.PORT || 8000;
 const RETHINK_PORT = process.env.RETHINK || 28015;
 
-//TODO: Sockets will depend on connecting to the database
+const createDrawing = ({connection, name}) => {
+    r
+        .table('drawings')
+        .insert({name, timestamp: new Date()})
+        .run(connection)
+        .then(() => console.log("created drawing in table drawings"));
+}
 
+const subscribeToDrawings = ({client, connection}) => {
+    r
+        .table("drawings")
+        .changes({include_initial: true})
+        .run(connection)
+        .then((cursor) => {
+            cursor.each((err, drawingRow) => {
+                client.emit("drawing", drawingRow.new_val);
+            })
+        })
+}
+
+//TODO: Sockets will depend on connecting to the database
 r
     .connect({host: 'localhost', port: RETHINK_PORT, db: 'awesome_whiteboard'})
     .then((connection) => {
 
-        //*Connection, passback a callback with that client
+        /*
+@purpose: On 'connection', when client calls socket, then we have established a connection and now have access to the client(socket)
+        */
         io.on("connection", (client) => {
 
-            /*
-function : client.on("subscribeToTimer")
-@desc: Will fire once a subscribeToTimer is fired from the client
-    */
+            client.on("createDrawing", ({name}) => {
+                createDrawing({connection, name});
+            })
 
-            client.on("subscribeToTimer", (interval) => {
+            client.on('subscribeToDrawings', () => {
+                subscribeToDrawings({client,connection});
+            })
 
-                console.log("Client is subscriming to timer with interval", interval);
-
-                r
-                    .table('timers')
-                    .changes()
-                    .run(connection)
-                    .then((cursor) => {
-                        cursor.each((err, timerRow) => {
-
-                            client.emit("timer", timerRow.new_val.timestamp);
-
-                        });
-                    });
-                //     setInterval(() => {         client.emit("timer", new Date());     },
-                // interval) });
-
-            });
-
-        });
+        }); //End subscribe tot imer
     });
-    
+
 io.listen(PORT);
 
 console.log("Listening on port", PORT);
